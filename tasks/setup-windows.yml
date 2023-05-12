@@ -1,0 +1,49 @@
+---
+# Copied and adapted from Splunk Attack Range (https://github.com/splunk/attack_range)
+# https://github.com/splunk/attack_range/blob/b49e9cf288ce3d0127e710021efd3c2613a20777/packer/ansible/roles/atomic_red_team/tasks/main.yml
+
+- name: Enable strong dotnet crypto
+  ansible.windows.win_regedit:
+    key: "{{ item }}"
+    value: SchUseStrongCrypto
+    datatype: dword
+    data: 1
+  with_items:
+    - "HKLM:\\SOFTWARE\\Microsoft\\.NetFramework\\v4.0.30319"
+    - "HKLM:\\SOFTWARE\\Wow6432Node\\Microsoft\\.NetFramework\\v4.0.30319"
+
+- name: Check installed providers
+  ansible.windows.win_shell: Get-PackageProvider
+  register: providers
+  changed_when: false
+
+- name: Install NuGet Provider
+  ansible.windows.win_shell: |
+    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force
+  when: providers.stdout is not search("NuGet")
+
+- name: Install Atomic Red Team
+  # at the time of writing, this worked better for us than: community.windows.win_psmodule
+  ansible.windows.win_shell: |
+    Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted
+    Install-Module -Name invoke-atomicredteam,powershell-yaml -Scope CurrentUser
+
+- name: Add ART to powershell profile
+  ansible.windows.win_shell: |
+    $script=@'
+    Import-Module invoke-atomicredteam
+    $PSDefaultParameterValues = @{"Invoke-AtomicTest:PathToAtomicsFolder"="C:\AtomicRedTeam\atomics"}
+    '@
+    $script | Out-File $PShome\Profile.ps1
+
+- name: "Install AtomicsFolder from {{ art_repository_owner }}"
+  ansible.windows.win_shell: |
+    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main" -Name "DisableFirstRunCustomize" -Value 2
+    IEX (IWR 'https://raw.githubusercontent.com/redcanaryco/invoke-atomicredteam/master/install-atomicsfolder.ps1' -UseBasicParsing)
+    Install-AtomicsFolder -Force -RepoOwner "{{ art_repository_owner }}" -Branch "{{ art_branch }}"
+  args:
+    creates: C:\AtomicRedTeam\atomics\used_guids.txt
+
+- name: Exclude Atomics Folder from Microsoft Defender
+  ansible.windows.win_shell: |
+    Add-MpPreference -ExclusionPath C:\AtomicRedTeam

@@ -1,0 +1,41 @@
+---
+disable_fetch_art_index: false
+
+art_repository_owner: redcanaryco
+art_branch: master
+
+banned_tids_linux:
+  - T1018     # slow ping scan
+  - T1046     # nmap
+  - T1070.004 # delete filesystem
+  - T1078.004 # cloud
+  - T1082     # Azure
+  - T1098     # cloud
+  - T1098.001 # cloud
+  - T1110.003 # cloud
+  - T1136.003 # AWS
+  - T1176     # requires Firefox
+  - T1217     # requires Firefox
+  - T1484.002 # Azure
+  - T1526     # Azure
+  - T1529     # reboot/shutdown
+  - T1530     # cloud
+  - T1562.006 # auditd changes (may break some telemetry collection)
+  - T1562.008 # cloud logging changes
+  - T1574.006 # Dynamic Linker Hijacking (requires manual cleanup / testing - might break subsequent tests)
+  - T1611     # container-based, needs prereqs, and hangs/timeout
+
+banned_tids_macos:
+  - T1485     # impact - data destruction
+  - T1529     # reboot/shutdown
+
+banned_tids_windows:
+  - T1485     # impact - data destruction
+  - T1529     # reboot/shutdown
+
+# these are updated by tasks/gather-art-tids.yml which polls github to write
+# playbook_dir/art-tids.yml as a fallback, the tasks/main.yml will load
+# vars/art-tids.yml, which can be manually updated with vars/update-art-tids.sh
+art_tids_linux: []
+art_tids_macos: []
+art_tids_windows: []

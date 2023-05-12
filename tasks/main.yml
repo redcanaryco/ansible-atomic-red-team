@@ -1,0 +1,35 @@
+---
+# tasks file for ansible_atomic_red_team
+
+- name: "Include the list of available TIDs"
+  block:
+    - name: Built list of ART TIDs
+      ansible.builtin.include_tasks: "gather-art-tids.yml"
+      when: not disable_fetch_art_index
+
+    - name: Load the ART TIDs
+      ansible.builtin.include_vars: "{{ playbook_dir }}/art-tids.yml"
+  rescue:
+    # this may require manual updates via vars/update-art-tids.sh
+    - name: Load the ART TIDs from role/vars
+      ansible.builtin.include_vars: "art-tids.yml"
+
+- name: Setup Windows
+  ansible.builtin.include_tasks: "setup-windows.yml"
+  when: ansible_system == 'Win32NT'
+
+- name: Setup Linux
+  ansible.builtin.include_tasks: "setup-linux.yml"
+  when: ansible_system == 'Linux'
+
+- name: Run invoke-atomictest on each TID (linux)
+  ansible.builtin.include_tasks: invoke-atomictest.yml
+  loop: "{{ art_tids_linux | difference(banned_tids_linux) }}"
+  when:
+    - ansible_system == 'Linux'
+
+- name: Run invoke-atomictest on each TID (windows)
+  ansible.builtin.include_tasks: invoke-atomictest.yml
+  loop: "{{ art_tids_windows | difference(banned_tids_windows) }}"
+  when:
+    - ansible_system == 'Win32NT'

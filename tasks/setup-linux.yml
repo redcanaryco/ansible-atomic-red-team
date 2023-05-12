@@ -1,0 +1,90 @@
+---
+- name: Powershell
+  block:
+    - name: Check for powershell
+      ansible.builtin.shell:
+        cmd: pwsh -c '$true'
+      changed_when: false
+  rescue:
+
+    # ------- Ubuntu
+
+    - name: Ensure powershell is installed (prereq)
+      ansible.builtin.package:
+        name:
+          - wget
+          - apt-transport-https
+          - software-properties-common
+        state: present
+      when: ansible_facts['distribution'] == 'Ubuntu'
+
+    - name: Ensure powershell is installed (repo keys)
+      ansible.builtin.apt:
+        deb: "https://packages.microsoft.com/config/ubuntu/{{ ansible_distribution_version }}/packages-microsoft-prod.deb"
+      when: ansible_facts['distribution'] == 'Ubuntu'
+
+    - name: Ensure powershell is installed (deb)
+      ansible.builtin.apt:
+        name: powershell
+        update_cache: yes
+      when: >-
+        ansible_facts['distribution'] == 'Ubuntu'
+
+    # ------- Amazon / CentOS
+
+    - name: Add Microsoft Repo (Amazon Linux 2)
+      ansible.builtin.get_url:
+        url: https://packages.microsoft.com/config/rhel/8/prod.repo
+        dest: /etc/yum.repos.d/microsoft.repo
+        mode: '0644'
+        owner: root
+      when: ansible_facts['distribution'] == 'Amazon'
+
+    - name: Add Microsoft Repo (CentOS)
+      ansible.builtin.get_url:
+        url: https://packages.microsoft.com/config/rhel/{{ ansible_distribution_major_version }}/prod.repo
+        dest: /etc/yum.repos.d/microsoft.repo
+        mode: '0644'
+        owner: root
+      when: ansible_facts['distribution'] == 'CentOS'
+
+    - name: Ensure powershell is installed (rpm)
+      ansible.builtin.yum:
+        name: powershell
+        update_cache: yes
+      when: >-
+        ansible_facts['distribution'] == 'CentOS' or
+        ansible_facts['distribution'] == 'Amazon'
+
+- name: Install Invoke-ART
+  ansible.builtin.shell:
+    cmd: |
+      IEX (IWR 'https://raw.githubusercontent.com/redcanaryco/invoke-atomicredteam/master/install-atomicredteam.ps1' -UseBasicParsing); Install-AtomicRedTeam -getAtomics -Force
+  args:
+    executable: /usr/bin/pwsh
+    creates: /root/AtomicRedTeam/atomics/Indexes/index.yaml
+
+- name: Find the path to the system powershell profile
+  ansible.builtin.shell:
+    cmd: |
+      $PROFILE.AllUsersAllHosts
+  changed_when: false
+  args:
+    executable: /usr/bin/pwsh
+  register: pwshprofile
+
+- name: Powershell Profile (debug)
+  ansible.builtin.debug:
+    var: pwshprofile.stdout
+
+- name: Add Invoke-AtomicRedTeam to the powershell profile
+  ansible.builtin.lineinfile:
+    path: "{{ pwshprofile.stdout }}"
+    state: present
+    regex: '.*Inovke-AtomicRedTeam.*'
+    line: |-
+      Import-Module "/root/AtomicRedTeam/invoke-atomicredteam/Invoke-AtomicRedTeam.psd1" -Force
+    owner: root
+    group: root
+    mode: '0644'
+    create: yes

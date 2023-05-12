@@ -1,0 +1,38 @@
+galaxy_info:
+  author: George Allen
+  description: An ansible role to execute Atomic Red Team tests on Windows and Linux using Invoke-AtomicRedTeam
+  company: Red Canary
+  role_name: atomic_red_team
+  namespace: redcanary
+
+  license: MIT
+
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Windows
+      versions:
+        - "2016"
+        - "2019"
+        - "2022"
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+    - name: EL
+      versions:
+        - "7"
+        - "8"
+
+
+  galaxy_tags: []
+    # List tags for your role here, one per line. A tag is a keyword that describes
+    # and categorizes the role. Users find roles by searching for tags. Be sure to
+    # remove the '[]' above, if you add tags to this list.
+    #
+    # NOTE: A tag is limited to a single word comprised of alphanumeric characters.
+    #       Maximum 20 tags per role.
+
+dependencies: []
+  # List your role dependencies here, one per line. Be sure to remove the '[]' above,
+  # if you add dependencies to this list.

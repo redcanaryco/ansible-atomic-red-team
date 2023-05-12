@@ -1,0 +1,136 @@
+---
+# parse the TID argument list from the loop include_tasks in tasks/main.yml, eg:
+#     "test": [
+#         {
+#             "input": "copy of raw item",
+#             "technique": "Txxxx[.xxx]",
+#             "testnumbers": "1,2,3" or "testguids": "<guid>"
+#         }
+#     ]
+- name: Parse test set
+  ansible.builtin.set_fact:
+    test: |
+      {%- set test = [] -%}
+      {%- if item | regex_search('[ :][0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}') -%}
+      {%-   set t = item | regex_findall('([^ :]+)') -%}
+      {{    test.append(dict(input=item, technique=t[0], testguids=t[1])) }}
+      {%- elif item | regex_search('^T.*-.*') -%}
+      {%-   set t = item.split('-') -%}
+      {{    test.append(dict(input=item, technique=t[0], testnumbers=t[1])) }}
+      {%- else -%}
+      {{    test.append(dict(input=item, technique=item)) }}
+      {%- endif -%}
+      {{ test }}
+
+# then turn each test object into a set of command line arguments, eg:
+#     "testarg" : "-AtomicTechnique T1070 -TestGuid 47966a1d-df4f-4078-af65-db6d9aa20739,7e6721df-5f08-4370-9255-f06d8a77af4c "
+#     "testarg" : "-AtomicTechnique T1070 -TestNumbers 1,2 "
+- name: Parse test set
+  ansible.builtin.set_fact:
+    testarg: |-
+      {{- ('-AtomicTechnique ' + test[0].technique + ' ') -}}
+      {%- if test[0].testguids is defined -%}
+      {{- ('-TestGuid ' + test[0].testguids + ' ') -}}
+      {%- elif test[0].testnumbers is defined -%}
+      {{- ('-TestNumbers ' + test[0].testnumbers + ' ') -}}
+      {%- endif -%}
+
+- name: Run Linux Tests
+  when: ansible_system == 'Linux'
+  block:
+    - name: "Check for and install prereqs for {{ item }}"
+      block:
+        - name: "Check prereqs for {{ item }}"
+          ansible.builtin.shell:
+            cmd: |
+              Invoke-AtomicTest {{ testarg }} -CheckPrereqs
+          args:
+            executable: /usr/bin/pwsh
+          register: check_prereqs
+          failed_when: '"Prerequisites not met:" in check_prereqs.stdout'
+          changed_when: false
+      rescue:
+        - name: "Install prereqs for {{ item }}"
+          ansible.builtin.shell:
+            cmd: |
+              Invoke-AtomicTest {{ testarg }} -GetPrereqs
+          args:
+            executable: /usr/bin/pwsh
+          register: get_prereqs
+          ignore_errors: true
+
+        - name: "Debug prereqs {{ item }}"
+          ansible.builtin.debug:
+            var: get_prereqs.stdout
+          when: get_prereqs.changed
+
+    - name: "Execute {{ item }}"
+      ansible.builtin.shell:
+        cmd: |
+          Invoke-AtomicTest {{ testarg }} -Confirm:$false -TimeoutSeconds 300 -ExecutionLogPath /root/atc_execution.csv
+      args:
+        executable: /usr/bin/pwsh
+      register: execute_test
+      ignore_errors: true
+
+    - name: "Execute {{ item }}"
+      ansible.builtin.debug:
+        var: execute_test.stdout
+
+    - name: "Cleanup {{ item }}"
+      ansible.builtin.shell:
+        cmd: |
+          Invoke-AtomicTest {{ testarg }} -Cleanup
+      args:
+        executable: /usr/bin/pwsh
+      register: cleanup_test
+      ignore_errors: true
+
+    - name: "Cleanup {{ item }}"
+      ansible.builtin.debug:
+        var: cleanup_test.stdout
+      when: cleanup_test.rc != 0
+
+- name: Run Windows Tests
+  when: ansible_system == 'Win32NT'
+  block:
+    - name: "Check for and install prereqs for {{ item }}"
+      block:
+        - name: "Check prereqs for {{ item }}"
+          ansible.windows.win_shell: |
+            Invoke-AtomicTest {{ testarg }} -CheckPrereqs
+          register: check_prereqs
+          failed_when: '"Prerequisites not met:" in check_prereqs.stdout'
+          changed_when: false
+      rescue:
+        - name: "Install prereqs for {{ item }}"
+          ansible.windows.win_shell: |
+            Invoke-AtomicTest {{ testarg }} -GetPrereqs
+          register: get_prereqs
+          ignore_errors: true
+
+        - name: "Debug prereqs {{ item }}"
+          ansible.builtin.debug:
+            var: get_prereqs.stdout
+          when: get_prereqs.changed
+
+    - name: "Execute {{ item }}"
+      ansible.windows.win_shell: |
+        Invoke-AtomicTest {{ testarg }} -Confirm:$false -TimeoutSeconds 300 -ExecutionLogPath /root/atc_execution.csv
+      register: execute_test
+      ignore_errors: true
+
+    - name: "Execute {{ item }}"
+      ansible.builtin.debug:
+        var: execute_test.stdout
+
+    - name: "Cleanup {{ item }}"
+      ansible.windows.win_shell: |
+        Invoke-AtomicTest {{ testarg }} -Cleanup
+      register: cleanup_test
+      ignore_errors: true
+
+    - name: "Cleanup {{ item }}"
+      ansible.builtin.debug:
+        var: cleanup_test.stdout
+      when: cleanup_test.rc != 0

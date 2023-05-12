@@ -1,0 +1,35 @@
+---
+- name: Set Indexes-CSV url
+  ansible.builtin.set_fact:
+    index_csv_url: "https://github.com/{{ art_repository_owner }}/atomic-red-team/raw/{{ art_branch }}/atomics/Indexes/Indexes-CSV/"
+
+- name: Gather and write art-tids.yml
+  ansible.builtin.blockinfile:
+    dest: "{{ playbook_dir }}/art-tids.yml"
+    create: true
+    mode: "0644"
+    block: |
+      {%- set list = [] -%}
+      {%- for line in lookup('ansible.builtin.url', index_csv_url + 'windows-index.csv', wantlist=True) -%}
+      {%-   if line.split(',')[1] | regex_search('^T[0-9.]+$') -%}
+      {%-     if line.split(',')[1] not in list -%}
+      {{        list.append(line.split(',')[1]) }}
+      {%-     endif -%}
+      {%-   endif -%}
+      {%- endfor -%}
+      {#- build a dict with this for to_nice_yaml so it will indent correctly -#}
+      {%- set yamloutput = dict(art_tids_windows=list) -%}
+      {{ yamloutput | to_nice_yaml | indent(2) }}
+      {%- set list = [] -%}
+      {%- for line in lookup('ansible.builtin.url', index_csv_url + 'linux-index.csv', wantlist=True) -%}
+      {%-   if line.split(',')[1] | regex_search('^T[0-9.]+$') -%}
+      {%-     if line.split(',')[1] not in list -%}
+      {{        list.append(line.split(',')[1]) }}
+      {%-     endif -%}
+      {%-   endif -%}
+      {%- endfor -%}
+      {%- set yamloutput = dict(art_tids_linux=list) -%}
+      {{ yamloutput | to_nice_yaml | indent(2) }}
+  delegate_to: localhost
+  become: false
+  when: not disable_fetch_art_index

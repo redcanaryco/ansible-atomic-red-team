@@ -1,0 +1,45 @@
+---
+- name: Example playbook for running ansible_atomic_red_team
+  hosts: all
+  gather_facts: true
+  tasks:
+
+    - name: Run all available tests
+      ansible.builtin.include_role:
+        name: ansible_atomic_red_team
+      when: false # change to true or remove to run all tests
+
+    - name: Run a set of Linux ART Tests
+      ansible.builtin.include_role:
+        name: ansible_atomic_red_team
+        # you cannot use become directly on include_role, but can control elevation using apply
+        apply:
+          become: true
+      when: ansible_system == 'Linux'
+      vars:
+        art_tids_linux:
+          - T1136.001
+          - T1053.003
+          - T1003.008-1,2,3
+          - T1003.008 f5aa6543-6cb2-4fae-b9c2-b96e14721713
+          - T1070.003 47966a1d-df4f-4078-af65-db6d9aa20739,7e6721df-5f08-4370-9255-f06d8a77af4c
+        # separators MUST be - for TID and testnumbers
+        # separator MAY be ' ' or ':' for TID and GUIDs
+        # TID.SUBTID MUST be specified and match GUIDs, as required by Invoke-AtomicTest
+
+    - name: Run a set of Windows ART Tests
+      ansible.builtin.include_role:
+        name: ansible_atomic_red_team
+        apply:
+          become: false
+      when: ansible_system == 'Win32NT'
+      vars:
+        art_tids_windows:
+          # https://thedfirreport.com/2022/08/08/bumblebee-roasts-its-way-to-domain-admin/
+          - T1553.005:c2587b8d-743d-4985-aa50-c83394eaeb68 # download and mount iso, run lnk
+          - T1016 # System Network Configurration Discovery - 8 tests
+          - T1057 # Process Discovery - 5 tests
+          - T1219-2 # Install Anydesk
+          - T1087.002-5,6,7,8 # Account Discovery(domain)
+          - T1482-4,5 # Domain Trust Discovery
+          - T1003.001:2536dee2-12fb-459a-8c37-971844fa73be # OS Cred Dumping mini-dump
