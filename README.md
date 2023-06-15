@@ -12,7 +12,7 @@ This role can be included in a playbook using `include_role` along with
 variables with a list of Atomic Red Team tests to execute.
 
 Tests are specified by Technique ID and optionally also by TestNumber or
-TestGuid to pick specific ART tests.
+TestGuid to pick specific Atomic Red Team tests.
 
 The default variables contain a list of "banned" TIDs, which contain behavior
 that is not condusive to automated or repeated testing (eg [T1070.004-8 Delete
@@ -22,7 +22,7 @@ or involve extended dependencies or resources beyond a single VM (eg cloud
 tests). These tests are filtered out at the TID level (eg, matching
 `T[0-9]{4}(\.?[0-9]{3})?`), but can still be specified by TID+GUID if desired.
 
-## Why another way to execute ART Tests?
+## Why another way to execute Atomic Red Team Tests?
 
 There are several exellent execution frameworks for Atomic Red Team, but we desired easy
 integreation between our test framework and other devops tools that create VMs,
@@ -56,9 +56,9 @@ Role Variables
 
 in `defaults/main.yml`:
 - `banned_tids_linux`: annotated list of TIDs to *NOT* run
-- `art_tids_linux`: list of the linux TIDs available in ART
-- `art_tids_mac`: list of the mac TIDs available in ART
-- `art_tids_windows`: list of the windows TIDs available in ART
+- `art_tids_linux`: list of the linux TIDs available in Atomic Red Team
+- `art_tids_mac`: list of the mac TIDs available in Atomic Red Team
+- `art_tids_windows`: list of the windows TIDs available in Atomic Red Team
 - `art_repository_owner: redcanaryco` - override with the github repo owner for the atomic_red_team repo to use.
 - `art_branch: master` - override with the branch to use
 
