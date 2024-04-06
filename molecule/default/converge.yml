@@ -1,0 +1,13 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: Include default variables
+      ansible.builtin.include_vars:
+        file: "../../defaults/main.yml"
+    - name: Include variables
+      ansible.builtin.include_vars:
+        file: "../../vars/main.yml"
+  roles:
+    - name: Run the atomic-red-team role
+      role: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"

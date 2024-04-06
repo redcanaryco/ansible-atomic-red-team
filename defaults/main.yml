@@ -39,3 +39,7 @@ banned_tids_windows:
 art_tids_linux: []
 art_tids_macos: []
 art_tids_windows: []
+
+# PowerShell version to install (if needed)
+atomic_red_team_pwsh_version: "7.4.1"
+atomic_red_team_nix_pwsh_path: "/opt/microsoft/powershell/7"

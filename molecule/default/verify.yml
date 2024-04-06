@@ -1,0 +1,34 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Include default variables
+      ansible.builtin.include_vars:
+        file: "../../defaults/main.yml"
+
+    - name: Include variables
+      ansible.builtin.include_vars:
+        file: "../../vars/main.yml"
+
+    - name: Check if PowerShell is installed
+      ansible.builtin.shell:
+        cmd: "pwsh -NoProfile -v"
+      register: pwsh_version
+      ignore_errors: true
+
+    - name: Assert that PowerShell is installed
+      ansible.builtin.assert:
+        that:
+          - pwsh_version.rc == 0
+          - "'PowerShell' in pwsh_version.stdout"
+
+    - name: Check if /usr/local/bin is in $PATH
+      ansible.builtin.shell:
+        cmd: "echo $PATH"
+      register: system_path
+
+    - name: Assert that /usr/local/bin is in $PATH
+      ansible.builtin.assert:
+        that:
+          - "'/usr/local/bin' in system_path.stdout"
