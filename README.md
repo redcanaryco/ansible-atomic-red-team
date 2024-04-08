@@ -1,5 +1,4 @@
-ansible_atomic_red_team
-=========
+# ansible_atomic_red_team
 
 A role to execute atomic red team tests.
 
@@ -22,11 +21,12 @@ or involve extended dependencies or resources beyond a single VM (eg cloud
 tests). These tests are filtered out at the TID level (eg, matching
 `T[0-9]{4}(\.?[0-9]{3})?`), but can still be specified by TID+GUID if desired.
 
-## Why another way to execute Atomic Red Team Tests?
+## Why another way to execute Atomic Red Team Tests
 
-There are several exellent execution frameworks for Atomic Red Team, but we desired easy
-integreation between our test framework and other devops tools that create VMs,
-configure sensors and prerequisites, and run other non-AtomicRedTeam tests.
+There are several exellent execution frameworks for Atomic Red Team, but we
+desired easy integreation between our test framework and other devops tools
+that create VMs, configure sensors and prerequisites, and run other
+non-AtomicRedTeam tests.
 
 Ansible and Terraform allow us to meet these goals for fully automated
 testing. Terraform creates VMs provisioned by Ansible. Ansible playbooks run
@@ -46,27 +46,29 @@ query the Atomic Red Team test inventory CSV files on github and create/update
 all execpt "banned" TIDs.
 
 If you want to disable this fetch from github on the machine running the
-playbook, set `disable_fetch_art_index: true`. This will cause
-`tasks/main.yml` to fall back to `vars/art-tids.yml` which can be manually
-updates with `vars/update-art-tids.sh`
+playbook, set `ansible_atomic_red_team_disable_fetch_art_index: true`.
+This will cause `tasks/main.yml` to fall back to `vars/art-tids.yml` which
+can be manually updates with `vars/update-art-tids.sh`
 
-
-Role Variables
---------------
+## Role Variables
 
 in `defaults/main.yml`:
-- `banned_tids_linux`: annotated list of TIDs to *NOT* run
-- `art_tids_linux`: list of the linux TIDs available in Atomic Red Team
-- `art_tids_mac`: list of the mac TIDs available in Atomic Red Team
-- `art_tids_windows`: list of the windows TIDs available in Atomic Red Team
-- `art_repository_owner: redcanaryco` - override with the github repo owner for the atomic_red_team repo to use.
-- `art_branch: master` - override with the branch to use
 
+- `ansible_atomic_red_team_banned_tids_linux`: annotated list of TIDs to _NOT_ run
+- `ansible_atomic_red_team_tids_linux`: list of the linux TIDs available in
+  Atomic Red Team
+- `ansible_atomic_red_team_tids_macos`: list of the mac TIDs available in
+  Atomic Red Team
+- `ansible_atomic_red_team_tids_windows`: list of the windows TIDs available in
+  Atomic Red Team
+- `ansible_atomic_red_team_repository_owner: redcanaryco` - override with the
+  github repo owner for the atomic_red_team repo to use.
+- `ansible_atomic_red_team_branch: master` - override with the branch to use
 
-Example Playbook
-----------------
+## Example Playbook
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+Including an example of how to use your role (for instance, with variables
+passed in as parameters) is always nice for users too:
 
 ```yaml
 ---
@@ -74,15 +76,15 @@ Including an example of how to use your role (for instance, with variables passe
   gather_facts: True
   become: True
   tasks:
-
     - include_role:
         name: ansible_atomic_red_team
-        # you cannot use become directly on include_role, but can control elevation using apply
+        # you cannot use become directly on include_role,
+        # but can control elevation using apply
         apply:
           become: True
       when: ansible_system == 'Linux'
       vars:
-        art_tids_linux:
+        ansible_atomic_red_team_tids_linux:
           - T1136.001
           - T1053.003
           - T1003.008-1,2,3
@@ -98,7 +100,7 @@ Including an example of how to use your role (for instance, with variables passe
           become: False
       when: ansible_system == 'Win32NT'
       vars:
-        art_tids_windows:
+        ansible_atomic_red_team_tids_windows:
           - T1027
           - T1053.005
           - T1547.001-1,2

@@ -36,11 +36,11 @@
     '@
     $script | Out-File $PShome\Profile.ps1
 
-- name: "Install AtomicsFolder from {{ art_repository_owner }}"
+- name: "Install AtomicsFolder from {{ ansible_atomic_red_team_repository_owner }}"
   ansible.windows.win_shell: |
     Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Internet Explorer\Main" -Name "DisableFirstRunCustomize" -Value 2
     IEX (IWR 'https://raw.githubusercontent.com/redcanaryco/invoke-atomicredteam/master/install-atomicsfolder.ps1' -UseBasicParsing)
-    Install-AtomicsFolder -Force -RepoOwner "{{ art_repository_owner }}" -Branch "{{ art_branch }}"
+    Install-AtomicsFolder -Force -RepoOwner "{{ ansible_atomic_red_team_repository_owner }}" -Branch "{{ ansible_atomic_red_team_branch }}"
   args:
     creates: C:\AtomicRedTeam\atomics\used_guids.txt
 

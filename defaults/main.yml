@@ -1,10 +1,10 @@
 ---
-disable_fetch_art_index: false
+ansible_atomic_red_team_disable_fetch_art_index: false
 
-art_repository_owner: redcanaryco
-art_branch: master
+ansible_atomic_red_team_repository_owner: redcanaryco
+ansible_atomic_red_team_branch: master
 
-banned_tids_linux:
+ansible_atomic_red_team_banned_tids_linux:
   - T1018     # slow ping scan
   - T1046     # nmap
   - T1070.004 # delete filesystem
@@ -20,22 +20,33 @@ banned_tids_linux:
   - T1526     # Azure
   - T1529     # reboot/shutdown
   - T1530     # cloud
+  - T1562.001 # breaks the tests
   - T1562.006 # auditd changes (may break some telemetry collection)
   - T1562.008 # cloud logging changes
   - T1574.006 # Dynamic Linker Hijacking (requires manual cleanup / testing - might break subsequent tests)
   - T1611     # container-based, needs prereqs, and hangs/timeout
 
-banned_tids_macos:
+ansible_atomic_red_team_banned_tids_macos:
   - T1485     # impact - data destruction
   - T1529     # reboot/shutdown
 
-banned_tids_windows:
+ansible_atomic_red_team_banned_tids_windows:
   - T1485     # impact - data destruction
   - T1529     # reboot/shutdown
 
 # these are updated by tasks/gather-art-tids.yml which polls github to write
 # playbook_dir/art-tids.yml as a fallback, the tasks/main.yml will load
 # vars/art-tids.yml, which can be manually updated with vars/update-art-tids.sh
-art_tids_linux: []
-art_tids_macos: []
-art_tids_windows: []
+ansible_atomic_red_team_tids_linux: []
+ansible_atomic_red_team_tids_macos: []
+ansible_atomic_red_team_tids_windows: []
+
+# Execute the ART tests
+ansible_atomic_red_team_execute: false
+
+# PowerShell version to install (if needed)
+ansible_atomic_red_team_pwsh_version: "7.4.1"
+ansible_atomic_red_team_nix_pwsh_path: "/opt/microsoft/powershell/7"
+
+# Timeout in seconds for each test
+ansible_atomic_red_team_timeout: 20

@@ -1,1 +1,13 @@
 ---
+ansible_atomic_red_team_common_install_packages:
+  - wget
+
+ansible_atomic_red_team_debian_specific_packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - libunwind8
+  - software-properties-common
+
+ansible_atomic_red_team_redhat_specific_packages:
+  - libicu

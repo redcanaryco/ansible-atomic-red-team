@@ -1,5 +1,5 @@
 ---
-art_tids_linux:
+ansible_atomic_red_team_tids_linux:
   - T1003.007
   - T1003.008
   - T1007
@@ -86,7 +86,7 @@ art_tids_linux:
   - T1571
   - T1574.006
   - T1614.001
-art_tids_macos:
+ansible_atomic_red_team_tids_macos:
   - T1016
   - T1018
   - T1027
@@ -173,7 +173,7 @@ art_tids_macos:
   - T1571
   - T1574.006
   - T1647
-art_tids_windows:
+ansible_atomic_red_team_tids_windows:
   - T1003
   - T1003.001
   - T1003.002
